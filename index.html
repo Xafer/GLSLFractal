@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testies</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div id="display">
+    </div>
+</body>
+
+<script id="vShader" type="x-shader/x-vertex">
+		varying vec2 vUv;
+
+		void main() {
+
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+		}
+</script>
+<script id="fShader" type="x-shader/x-fragment">
+
+varying vec2 vUv;
+uniform float time;
+
+const int iterations = 300;//detail
+
+uniform float zoom;
+uniform float offsetX;
+uniform float offsetY;
+uniform float offsetZ;
+uniform float details;
+
+uniform float seedX;
+uniform float seedY;
+
+int fractal(vec2 p)
+{
+	vec2 seed = vec2(seedX, seedY);
+	for(int i = 0; i < iterations; i++)
+	{
+		if((p.x*p.x + p.y*p.y) > offsetZ*offsetZ)
+		{
+			return i;
+		}
+		p = vec2(2.0 * p.x * p.y + seed.y,p.x * p.x - p.y * p.y + seed.x);
+		//p = vec2(p.x / p.y + seed.x, p.x*p.y*p.y + p.x*p.y*p.x + seed.y);
+		//p = vec2(p.x * p.y * p.x * p.y / seed.x + seed.y, p.x*p.x - p.y*p.y + seed.x);
+		//p = vec2(p.x * p.x - p.y * p.y + seed.x, 2.0*p.x*p.y + seed.y);
+	}
+	
+	return 0;
+}
+
+float modulo(float x, float modulor)
+{
+	float w = x/modulor;
+	float remainder = (w - float(int(w))) * modulor;
+	return remainder;
+}
+
+vec3 color(int i)
+{
+	/*if(i > 50)
+	{
+		float d = (float(i - 50) / float(iterations - 50));
+		d = modulo(float(i),10.0)/10.0;
+		d = sin(float(i)/3.14);
+		//return vec3(sin(d),cos(d),tan(d));
+		return vec3(d,d+0.5,0.5-d);
+	}
+	else{return vec3(0.0,0.0,0.0);}*/
+	float f = float(i)/float(iterations) * 2.0;
+	f=f*f * 4.0;
+	return vec3((sin(f*2.0)), (sin(f*4.0)), abs(sin(f*7.0)));
+}
+
+void main( void ) {
+
+	vec2 position = ((vUv * (1.0 / zoom))) - (1.0/zoom)/2.0;
+	
+	position.x += offsetX;
+	position.y += offsetY;
+	
+	vec3 c = vec3(0.0);
+	
+	c += color(fractal(position));
+	
+	gl_FragColor = vec4( c , 1.0 );
+
+}
+</script>
+
+<script src="lib/three.min.js"></script>
+<script src="lib/CopyShader.js"></script>
+<script src="lib/postprocessing/EffectComposer.js"></script>
+<script src="lib/postprocessing/RenderPass.js"></script>
+<script src="lib/postprocessing/MaskPass.js"></script>
+<script src="lib/postprocessing/ShaderPass.js"></script>
+<script src="javascript/main.js"></script>
+</html>
